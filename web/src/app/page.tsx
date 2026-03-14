@@ -36,6 +36,7 @@ export default function Home() {
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [authLoading, setAuthLoading] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const lastSeenRef = useRef<Record<string, string>>({});
   const viewRef = useRef<'list' | 'chat'>('list');
@@ -94,6 +95,7 @@ export default function Home() {
 
   const auth = async () => {
     try {
+      setAuthLoading(true);
       const url = mode === 'login' ? '/auth/login' : '/auth/signup';
       const payload: any = { username, password };
       if (mode === 'signup') payload.fullName = fullName;
@@ -111,6 +113,8 @@ export default function Home() {
         'Invalid username or password';
       setToast({ message, type: 'error' });
       setTimeout(() => setToast(null), 2500);
+    } finally {
+      setAuthLoading(false);
     }
   };
 
@@ -358,7 +362,14 @@ export default function Home() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-            <button className="w-full rounded-xl bg-[#1877f2] py-3 font-semibold" onClick={auth}>
+            <button
+              className="w-full rounded-xl bg-[#1877f2] py-3 font-semibold flex items-center justify-center gap-2 disabled:opacity-70"
+              onClick={auth}
+              disabled={authLoading}
+            >
+              {authLoading && (
+                <span className="inline-block h-4 w-4 border-2 border-white/60 border-t-white rounded-full animate-spin" />
+              )}
               {mode === 'login' ? 'Log in' : 'Create account'}
             </button>
           </div>
