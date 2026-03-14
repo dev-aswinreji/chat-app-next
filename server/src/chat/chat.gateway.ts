@@ -143,4 +143,36 @@ export class ChatGateway {
       });
     }
   }
+
+  @SubscribeMessage('typing:start')
+  async onTypingStart(
+    @MessageBody() payload: { toUserId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const fromUserId = this.onlineUsers.get(client.id);
+    if (!fromUserId) return;
+    const recipientSocket = this.userSockets.get(payload.toUserId);
+    if (recipientSocket) {
+      this.server.to(recipientSocket).emit('typing', {
+        fromUserId,
+        isTyping: true,
+      });
+    }
+  }
+
+  @SubscribeMessage('typing:stop')
+  async onTypingStop(
+    @MessageBody() payload: { toUserId: string },
+    @ConnectedSocket() client: Socket,
+  ) {
+    const fromUserId = this.onlineUsers.get(client.id);
+    if (!fromUserId) return;
+    const recipientSocket = this.userSockets.get(payload.toUserId);
+    if (recipientSocket) {
+      this.server.to(recipientSocket).emit('typing', {
+        fromUserId,
+        isTyping: false,
+      });
+    }
+  }
 }

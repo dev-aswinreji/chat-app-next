@@ -37,11 +37,14 @@ export default function Home() {
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [authLoading, setAuthLoading] = useState(false);
+  const [typingMap, setTypingMap] = useState<Record<string, boolean>>({});
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const lastSeenRef = useRef<Record<string, string>>({});
   const viewRef = useRef<'list' | 'chat'>('list');
   const activeUserIdRef = useRef<string | null>(null);
   const userIdRef = useRef<string | null>(null);
+  const typingTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isTypingRef = useRef(false);
 
   const activeUser = useMemo(
     () => users.find((u) => u.id === activeUserId) || null,
@@ -233,6 +236,13 @@ export default function Home() {
       }));
     });
 
+    s.on('typing', (payload: { fromUserId: string; isTyping: boolean }) => {
+      setTypingMap((prev) => ({
+        ...prev,
+        [payload.fromUserId]: payload.isTyping,
+      }));
+    });
+
     s.on('message:delivered', (payload: { messageId: number }) => {
       setMessages((prev) =>
         prev.map((m) => (m.id === payload.messageId ? { ...m, status: 'delivered' } : m))
@@ -329,9 +339,22 @@ export default function Home() {
       });
   }, [token, activeUserId, user, socket, view]);
 
+  const stopTyping = () => {
+    if (!socket || !activeUserId) return;
+    if (isTypingRef.current) {
+      socket.emit('typing:stop', { toUserId: activeUserId });
+      isTypingRef.current = false;
+    }
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+  };
+
   const sendMessage = () => {
     if (!text.trim() || !activeUserId || !socket) return;
     socket.emit('message:send', { toUserId: activeUserId, text });
+    stopTyping();
     setText('');
   };
 
@@ -584,6 +607,16 @@ export default function Home() {
             </div>
           </div>
           <div className="flex-1 overflow-y-auto space-y-3 px-4 md:px-6 pr-1">
+            {activeUser && typingMap[activeUser.id] && (
+              <div className="text-xs text-slate-400 flex items-center gap-2">
+                <span className="flex gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.15s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.3s]" />
+                </span>
+                typing...
+              </div>
+            )}
             {messages
               .filter((m) =>
                 activeUser
@@ -652,7 +685,24 @@ export default function Home() {
               className="flex-1 rounded-2xl surface-muted border px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
               placeholder={`Message @${activeUser?.username}`}
               value={text}
-              onChange={(e) => setText(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                setText(value);
+                if (!socket || !activeUserId) return;
+                if (!value.trim()) {
+                  stopTyping();
+                  return;
+                }
+                if (!isTypingRef.current) {
+                  socket.emit('typing:start', { toUserId: activeUserId });
+                  isTypingRef.current = true;
+                }
+                if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
+                typingTimeoutRef.current = setTimeout(() => {
+                  stopTyping();
+                }, 1500);
+              }}
+              onBlur={() => stopTyping()}
             />
             <button
               className="h-11 w-11 md:h-11 md:w-11 rounded-xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
