@@ -548,8 +548,10 @@ export default function Home() {
                 </svg>
               </button>
               <div>
-                <p className="text-sm text-slate-400">Chatting with</p>
-                <h3 className="text-xl font-semibold">@{activeUser?.username}</h3>
+                <p className="text-sm text-slate-400">{activeUser ? 'Chatting with' : 'Select a chat'}</p>
+                <h3 className="text-xl font-semibold">
+                  {activeUser ? `@${activeUser.username}` : 'Start a conversation'}
+                </h3>
               </div>
             </div>
           </div>
