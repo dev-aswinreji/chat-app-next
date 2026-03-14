@@ -556,7 +556,7 @@ export default function Home() {
               </button>
               <div>
                 <p className="text-sm text-subtle">{activeUser ? 'Chatting with' : 'Select a chat'}</p>
-                <h3 className="text-xl font-semibold">
+                <h3 className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : ''}`}>
                   {activeUser ? `@${activeUser.username}` : 'Start a conversation'}
                 </h3>
               </div>
@@ -634,7 +634,7 @@ export default function Home() {
               onChange={(e) => setText(e.target.value)}
             />
             <button
-              className="h-10 w-10 md:h-11 md:w-11 rounded-2xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
+              className="h-10 w-12 md:h-11 md:w-12 rounded-2xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
               onClick={sendMessage}
               title="Send"
             >
