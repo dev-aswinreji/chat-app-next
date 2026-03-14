@@ -710,6 +710,12 @@ export default function Home() {
                   stopTyping();
                 }, 1500);
               }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
               onBlur={() => stopTyping()}
             />
             <button
