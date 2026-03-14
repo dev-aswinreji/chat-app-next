@@ -77,6 +77,21 @@ export default function Home() {
     localStorage.setItem('chat_theme', theme);
   }, [theme]);
 
+  useEffect(() => {
+    const setVh = () => {
+      const vv = window.visualViewport;
+      const height = vv ? vv.height : window.innerHeight;
+      document.documentElement.style.setProperty('--app-vh', `${height}px`);
+    };
+    setVh();
+    window.visualViewport?.addEventListener('resize', setVh);
+    window.addEventListener('resize', setVh);
+    return () => {
+      window.visualViewport?.removeEventListener('resize', setVh);
+      window.removeEventListener('resize', setVh);
+    };
+  }, []);
+
   const auth = async () => {
     try {
       const url = mode === 'login' ? '/auth/login' : '/auth/signup';
@@ -361,6 +376,7 @@ export default function Home() {
   return (
     <div className={`min-h-screen text-white relative ${theme === 'light' ? 'bg-[#f6f7fb] text-slate-900' : 'bg-[#0c1116] text-white'}`}>
       <style>{`
+        :root { --app-vh: 100vh; }
         .toast-progress {
           animation: toast-progress 2.5s linear forwards;
         }
@@ -405,7 +421,7 @@ export default function Home() {
           </div>
         </div>
       )}
-      <div className="max-w-6xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-[280px_1fr]">
+      <div className="max-w-6xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-[360px_1fr]">
         <aside className={`surface border rounded-2xl p-4 space-y-4 w-full min-h-[96vh] ${view === 'chat' ? 'hidden lg:block' : ''}`}>
           <div className="flex items-center justify-between gap-2">
             <div className="relative w-full">
@@ -508,17 +524,17 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className={`surface border rounded-2xl p-0 md:p-0 flex flex-col h-[100svh] md:h-[96vh] overflow-hidden w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
+        <section className={`surface border rounded-2xl p-0 md:p-0 flex flex-col h-[var(--app-vh)] md:h-[96vh] overflow-hidden w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
           <div className="sticky top-0 z-20 surface border-b px-4 md:px-6 py-4 flex items-center justify-between flex-none">
             <div className="flex items-center gap-3">
               <button
-                className="flex items-center gap-2 text-sm px-3 py-2 rounded-full surface-muted border"
+                className="h-10 w-10 rounded-full surface-muted border flex items-center justify-center"
                 onClick={() => setView('list')}
+                aria-label="Back"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <path d="m15 18-6-6 6-6" />
                 </svg>
-                Back
               </button>
               <div>
                 <p className="text-sm text-slate-400">Chatting with</p>
