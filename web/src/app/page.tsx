@@ -257,9 +257,11 @@ export default function Home() {
             }`}
           >
             <div className="flex items-center gap-2">
-              <span className="text-base">
-                {toast.type === 'success' ? '✅' : '⚠️'}
-              </span>
+              <span
+                className={`h-2.5 w-2.5 rounded-full ${
+                  toast.type === 'success' ? 'bg-emerald-400' : 'bg-red-400'
+                }`}
+              />
               <span className="text-sm text-slate-100/90">{toast.message}</span>
             </div>
             <div className="mt-2 h-0.5 w-full bg-slate-700/50 rounded-full overflow-hidden">
@@ -330,9 +332,11 @@ export default function Home() {
           }`}
         >
           <div className="flex items-center gap-2">
-            <span className="text-base">
-              {toast.type === 'success' ? '✅' : '⚠️'}
-            </span>
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${
+                toast.type === 'success' ? 'bg-emerald-400' : 'bg-red-400'
+              }`}
+            />
             <span className="text-sm text-slate-100/90">{toast.message}</span>
           </div>
           <div className="mt-2 h-0.5 w-full bg-slate-700/50 rounded-full overflow-hidden">
