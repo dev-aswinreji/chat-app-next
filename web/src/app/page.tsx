@@ -385,9 +385,10 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen text-white relative ${theme === 'light' ? 'bg-[#f6f7fb] text-slate-900' : 'bg-[#0c1116] text-white'}`}>
+    <div className={`min-h-screen w-screen overflow-x-hidden text-white relative ${theme === 'light' ? 'bg-[#f6f7fb] text-slate-900' : 'bg-[#0c1116] text-white'}`}>
       <style>{`
         :root { --app-vh: 100vh; }
+        html, body { overflow-x: hidden; max-width: 100vw; }
         .toast-progress {
           animation: toast-progress 2.5s linear forwards;
         }
