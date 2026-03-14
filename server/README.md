@@ -61,6 +61,20 @@ create index if not exists chat_reads_user_idx on public.chat_reads(user_id);
 create index if not exists chat_reads_peer_idx on public.chat_reads(peer_id);
 ```
 
+Then create unread counts view:
+
+```sql
+-- see sql/unread_counts.sql
+create or replace view public.unread_counts as
+select
+  to_user_id,
+  from_user_id,
+  count(*)::int as unread_count
+from public.messages
+where status != 'read'
+group by to_user_id, from_user_id;
+```
+
 Enable RLS if you want, but backend uses service role key.
 
 ## API Docs (Scalar)

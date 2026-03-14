@@ -16,7 +16,7 @@ import {
 import type { Request } from 'express';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { SupabaseService } from '../supabase/supabase.service';
-import { LastSeenResponseDto, MarkReadDto } from './messages.dto';
+import { LastSeenResponseDto, MarkReadDto, UnreadCountDto } from './messages.dto';
 
 @ApiTags('messages')
 @Controller('messages')
@@ -92,5 +92,22 @@ export class MessagesController {
       withUserId,
       lastReadAt: data?.last_read_at ?? null,
     };
+  }
+
+  @Get('unread-counts')
+  @UseGuards(JwtAuthGuard)
+  @ApiBearerAuth()
+  @ApiOkResponse({ type: [UnreadCountDto] })
+  async unreadCounts(@Req() req: Request) {
+    const user = req.user as { id: string };
+    const { data } = await this.supabase.db
+      .from('unread_counts')
+      .select('from_user_id, unread_count')
+      .eq('to_user_id', user.id);
+
+    return (data || []).map((row: any) => ({
+      fromUserId: row.from_user_id,
+      unreadCount: row.unread_count,
+    }));
   }
 }

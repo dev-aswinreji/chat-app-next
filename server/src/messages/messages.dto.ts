@@ -17,3 +17,11 @@ export class LastSeenResponseDto {
   @ApiProperty({ required: false })
   lastReadAt?: string | null;
 }
+
+export class UnreadCountDto {
+  @ApiProperty()
+  fromUserId: string;
+
+  @ApiProperty()
+  unreadCount: number;
+}

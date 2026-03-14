@@ -33,6 +33,7 @@ export default function Home() {
   const [view, setView] = useState<'list' | 'chat'>('list');
   const [search, setSearch] = useState('');
   const [lastSeenByUser, setLastSeenByUser] = useState<Record<string, string>>({});
+  const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const lastSeenRef = useRef<Record<string, string>>({});
@@ -96,6 +97,17 @@ export default function Home() {
 
     s.on('connect', () => {
       axios.get(`${API_URL}/users`).then((res) => setUsers(res.data));
+      axios
+        .get(`${API_URL}/messages/unread-counts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        .then((res) => {
+          const map: Record<string, number> = {};
+          res.data?.forEach((row: any) => {
+            map[row.fromUserId] = row.unreadCount;
+          });
+          setUnreadCounts(map);
+        });
     });
 
     s.on('presence:update', (payload: { userId: string; isOnline: boolean }) => {
@@ -129,7 +141,15 @@ export default function Home() {
           new Date(seenAt) >= new Date(msg.createdAt);
         return [...prev, shouldMarkRead ? { ...msg, status: 'read' } : msg];
       });
+
       const currentUserId = userIdRef.current;
+      if (msg.toUserId === currentUserId) {
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1,
+        }));
+      }
+
       if (
         msg.toUserId === currentUserId &&
         viewRef.current === 'chat' &&
@@ -153,6 +173,10 @@ export default function Home() {
       setLastSeenByUser((prev) => ({
         ...prev,
         [payload.readerId]: payload.readUpTo,
+      }));
+      setUnreadCounts((prev) => ({
+        ...prev,
+        [payload.readerId]: 0,
       }));
     });
 
@@ -233,6 +257,11 @@ export default function Home() {
               fromUserId: lastUnread.fromUserId,
             });
           }
+
+          setUnreadCounts((prev) => ({
+            ...prev,
+            [activeUserId]: 0,
+          }));
         }
       });
   }, [token, activeUserId, user, socket, view]);
@@ -421,9 +450,16 @@ export default function Home() {
                       <p className="text-xs text-slate-400">{u.full_name}</p>
                     </div>
                   </div>
-                  <span className={`text-xs ${u.is_online ? 'text-green-400' : 'text-gray-500'}`}>
-                    {u.is_online ? 'online' : 'offline'}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    {unreadCounts[u.id] ? (
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                        {unreadCounts[u.id]}
+                      </span>
+                    ) : null}
+                    <span className={`text-xs ${u.is_online ? 'text-green-400' : 'text-gray-500'}`}>
+                      {u.is_online ? 'online' : 'offline'}
+                    </span>
+                  </div>
                 </button>
               ))}
           </div>
