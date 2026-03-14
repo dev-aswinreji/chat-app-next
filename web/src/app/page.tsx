@@ -370,8 +370,11 @@ export default function Home() {
         }
         .theme-light body { background: #f6f7fb; }
         .theme-light .surface { background: #ffffff; border-color: #e5e7eb; }
-        .theme-light .surface-muted { background: #f8fafc; border-color: #e2e8f0; }
+        .theme-light .surface-muted { background: #f8fafc; border-color: #e2e8f0; color: #0f172a; }
+        .theme-light .surface-muted::placeholder { color: #94a3b8; }
         .theme-light .text-subtle { color: #64748b; }
+        .theme-light .text-slate-300 { color: #475569; }
+        .theme-light .text-slate-400 { color: #64748b; }
         .theme-light .bubble-me { background: #d1fae5; color: #0f172a; }
         .theme-light .bubble-them { background: #f1f5f9; color: #0f172a; }
         .bubble-me { background: #0f5132; color: #e6fffa; border: 1px solid #0b3b24; }
