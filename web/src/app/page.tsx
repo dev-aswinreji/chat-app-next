@@ -34,7 +34,7 @@ export default function Home() {
   const [search, setSearch] = useState('');
   const [lastSeenByUser, setLastSeenByUser] = useState<Record<string, string>>({});
   const [authError, setAuthError] = useState<string | null>(null);
-  const [toast, setToast] = useState<string | null>(null);
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const lastSeenRef = useRef<Record<string, string>>({});
   const viewRef = useRef<'list' | 'chat'>('list');
@@ -79,7 +79,7 @@ export default function Home() {
       setToken(data.accessToken);
       localStorage.setItem('chat_token', data.accessToken);
       localStorage.setItem('chat_user', JSON.stringify(data.user));
-      setToast('Successfully logged in');
+      setToast({ message: 'Successfully logged in', type: 'success' });
       setTimeout(() => setToast(null), 2500);
     } catch (err: any) {
       const message =
@@ -250,8 +250,31 @@ export default function Home() {
     return (
       <div className="min-h-screen bg-[#0c1116] text-white grid place-items-center px-6 relative">
         {toast && (
-          <div className="absolute top-6 right-6 bg-[#14202a] border border-[#24313a] text-slate-100 px-4 py-2 rounded-xl text-sm shadow-xl">
-            {toast}
+          <div className="absolute top-6 right-6 bg-[#14202a] border border-[#24313a] text-slate-100 px-4 py-3 rounded-2xl text-sm shadow-2xl w-72 overflow-hidden">
+            <div className="flex items-start gap-3">
+              <div
+                className={`h-9 w-9 rounded-xl flex items-center justify-center text-lg ${
+                  toast.type === 'success'
+                    ? 'bg-emerald-500/20 text-emerald-300'
+                    : 'bg-red-500/20 text-red-300'
+                }`}
+              >
+                {toast.type === 'success' ? '✅' : '⚠️'}
+              </div>
+              <div className="flex-1">
+                <p className="font-semibold">
+                  {toast.type === 'success' ? 'Success' : 'Error'}
+                </p>
+                <p className="text-slate-300 text-xs mt-1">{toast.message}</p>
+              </div>
+            </div>
+            <div className="mt-3 h-1 w-full bg-slate-700/40 rounded-full overflow-hidden">
+              <div
+                className={`h-full ${
+                  toast.type === 'success' ? 'bg-emerald-400' : 'bg-red-400'
+                } toast-progress`}
+              />
+            </div>
           </div>
         )}
         <div className="w-full max-w-sm space-y-4">
@@ -300,12 +323,53 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-[#0c1116] text-white relative">
+      <style jsx global>{`
+        .toast-progress {
+          animation: toast-progress 2.5s linear forwards;
+        }
+        @keyframes toast-progress {
+          from { width: 100%; }
+          to { width: 0%; }
+        }
+      `}</style>
       {toast && (
-        <div className="absolute top-6 right-6 bg-[#14202a] border border-[#24313a] text-slate-100 px-4 py-2 rounded-xl text-sm shadow-xl">
-          {toast}
+        <div className="absolute top-6 right-6 bg-[#14202a] border border-[#24313a] text-slate-100 px-4 py-3 rounded-2xl text-sm shadow-2xl w-72 overflow-hidden">
+          <div className="flex items-start gap-3">
+            <div
+              className={`h-9 w-9 rounded-xl flex items-center justify-center text-lg ${
+                toast.type === 'success'
+                  ? 'bg-emerald-500/20 text-emerald-300'
+                  : 'bg-red-500/20 text-red-300'
+              }`}
+            >
+              {toast.type === 'success' ? '✅' : '⚠️'}
+            </div>
+            <div className="flex-1">
+              <p className="font-semibold">
+                {toast.type === 'success' ? 'Success' : 'Error'}
+              </p>
+              <p className="text-slate-300 text-xs mt-1">{toast.message}</p>
+            </div>
+          </div>
+          <div className="mt-3 h-1 w-full bg-slate-700/40 rounded-full overflow-hidden">
+            <div
+              className={`h-full ${
+                toast.type === 'success' ? 'bg-emerald-400' : 'bg-red-400'
+              } toast-progress`}
+            />
+          </div>
         </div>
       )}
       <div className="max-w-6xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-[280px_1fr]">
+        <style jsx global>{`
+          .toast-progress {
+            animation: toast-progress 2.5s linear forwards;
+          }
+          @keyframes toast-progress {
+            from { width: 100%; }
+            to { width: 0%; }
+          }
+        `}</style>
         <aside className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-4 space-y-4 w-full min-h-[96vh] ${view === 'chat' ? 'hidden lg:block' : ''}`}>
           <div className="flex items-center justify-between gap-2">
             <input
@@ -327,7 +391,7 @@ export default function Home() {
                   localStorage.removeItem('chat_token');
                   localStorage.removeItem('chat_user');
                   setView('list');
-                  setToast('Successfully logged out');
+                  setToast({ message: 'Successfully logged out', type: 'success' });
                   setTimeout(() => setToast(null), 2500);
                 }}
                 title="Sign out"
