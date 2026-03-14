@@ -281,6 +281,7 @@ export default function Home() {
 
   useEffect(() => {
     if (!token || !activeUserId || !user) return;
+    setTypingMap({});
     axios
       .get(`${API_URL}/messages`, {
         params: { userId: user.id, withUserId: activeUserId },
@@ -691,14 +692,12 @@ export default function Home() {
                 const value = e.target.value;
                 setText(value);
                 if (!socket || !activeUserId) return;
-                if (!value.trim()) {
+                if (!value) {
                   stopTyping();
                   return;
                 }
-                if (!isTypingRef.current) {
-                  socket.emit('typing:start', { toUserId: activeUserId });
-                  isTypingRef.current = true;
-                }
+                socket.emit('typing:start', { toUserId: activeUserId });
+                isTypingRef.current = true;
                 if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current);
                 typingTimeoutRef.current = setTimeout(() => {
                   stopTyping();
