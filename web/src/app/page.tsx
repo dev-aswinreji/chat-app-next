@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
 
@@ -32,11 +32,34 @@ export default function Home() {
   const [text, setText] = useState('');
   const [view, setView] = useState<'list' | 'chat'>('list');
   const [search, setSearch] = useState('');
+  const [lastSeenByUser, setLastSeenByUser] = useState<Record<string, string>>({});
+  const [authError, setAuthError] = useState<string | null>(null);
+  const [toast, setToast] = useState<string | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement | null>(null);
+  const lastSeenRef = useRef<Record<string, string>>({});
+  const viewRef = useRef<'list' | 'chat'>('list');
+  const activeUserIdRef = useRef<string | null>(null);
+  const userIdRef = useRef<string | null>(null);
 
   const activeUser = useMemo(
     () => users.find((u) => u.id === activeUserId) || null,
     [users, activeUserId]
   );
+
+  const lastMyMessageId = useMemo(() => {
+    if (!user || !activeUserId) return null;
+    const convo = messages.filter(
+      (m) =>
+        (m.fromUserId === activeUserId && m.toUserId === user.id) ||
+        (m.fromUserId === user.id && m.toUserId === activeUserId)
+    );
+    const myMessages = convo.filter((m) => m.fromUserId === user.id);
+    if (myMessages.length === 0) return null;
+    const last = myMessages.reduce((a, b) =>
+      new Date(a.createdAt) > new Date(b.createdAt) ? a : b
+    );
+    return last.id;
+  }, [messages, user, activeUserId]);
 
   useEffect(() => {
     const savedToken = localStorage.getItem('chat_token');
@@ -46,15 +69,25 @@ export default function Home() {
   }, []);
 
   const auth = async () => {
-    const url = mode === 'login' ? '/auth/login' : '/auth/signup';
-    const payload: any = { username, password };
-    if (mode === 'signup') payload.fullName = fullName;
-    const { data } = await axios.post(`${API_URL}${url}`, payload);
-    if (data.error) return alert(data.error);
-    setUser(data.user);
-    setToken(data.token);
-    localStorage.setItem('chat_token', data.token);
-    localStorage.setItem('chat_user', JSON.stringify(data.user));
+    try {
+      setAuthError(null);
+      const url = mode === 'login' ? '/auth/login' : '/auth/signup';
+      const payload: any = { username, password };
+      if (mode === 'signup') payload.fullName = fullName;
+      const { data } = await axios.post(`${API_URL}${url}`, payload);
+      setUser(data.user);
+      setToken(data.accessToken);
+      localStorage.setItem('chat_token', data.accessToken);
+      localStorage.setItem('chat_user', JSON.stringify(data.user));
+      setToast('Successfully logged in');
+      setTimeout(() => setToast(null), 2500);
+    } catch (err: any) {
+      const message =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        'Invalid username or password';
+      setAuthError(message);
+    }
   };
 
   useEffect(() => {
@@ -62,34 +95,98 @@ export default function Home() {
     const s = io(WS_URL, { auth: { token } });
     setSocket(s);
 
+    s.on('connect', () => {
+      axios.get(`${API_URL}/users`).then((res) => setUsers(res.data));
+    });
+
     s.on('presence:update', (payload: { userId: string; isOnline: boolean }) => {
+      setUsers((prev) => {
+        const exists = prev.find((u) => u.id === payload.userId);
+        if (!exists) {
+          axios.get(`${API_URL}/users`).then((res) => setUsers(res.data));
+          return prev;
+        }
+        return prev.map((u) =>
+          u.id === payload.userId ? { ...u, is_online: payload.isOnline } : u
+        );
+      });
+    });
+
+    s.on('presence:sync', (list: { userId: string; isOnline: boolean }[]) => {
       setUsers((prev) =>
-        prev.map((u) => (u.id === payload.userId ? { ...u, is_online: payload.isOnline } : u))
+        prev.map((u) => {
+          const entry = list.find((l) => l.userId === u.id);
+          return entry ? { ...u, is_online: entry.isOnline } : u;
+        })
       );
     });
 
     s.on('message:new', (msg: Message) => {
-      setMessages((prev) => [...prev, msg]);
-      if (msg.toUserId === user?.id && view === 'chat' && activeUserId === msg.fromUserId) {
+      setMessages((prev) => {
+        const seenAt = lastSeenRef.current[msg.toUserId];
+        const shouldMarkRead =
+          msg.fromUserId === user?.id &&
+          seenAt &&
+          new Date(seenAt) >= new Date(msg.createdAt);
+        return [...prev, shouldMarkRead ? { ...msg, status: 'read' } : msg];
+      });
+      const currentUserId = userIdRef.current;
+      if (
+        msg.toUserId === currentUserId &&
+        viewRef.current === 'chat' &&
+        activeUserIdRef.current === msg.fromUserId &&
+        document.visibilityState === 'visible'
+      ) {
         s.emit('message:read', { messageId: msg.id, fromUserId: msg.fromUserId });
       }
     });
 
-    s.on('message:read', (payload: { messageId: number }) => {
+    s.on('message:read', (payload: { readUpTo: string; readerId: string }) => {
       setMessages((prev) =>
-        prev.map((m) => (m.id === payload.messageId ? { ...m, status: 'read' } : m))
+        prev.map((m) =>
+          m.fromUserId === user?.id &&
+          m.toUserId === payload.readerId &&
+          new Date(m.createdAt) <= new Date(payload.readUpTo)
+            ? { ...m, status: 'read' }
+            : m
+        )
+      );
+      setLastSeenByUser((prev) => ({
+        ...prev,
+        [payload.readerId]: payload.readUpTo,
+      }));
+    });
+
+    s.on('message:delivered', (payload: { messageId: number }) => {
+      setMessages((prev) =>
+        prev.map((m) => (m.id === payload.messageId ? { ...m, status: 'delivered' } : m))
       );
     });
 
     return () => {
       s.disconnect();
     };
-  }, [token, user?.id, view, activeUserId]);
+  }, [token, user?.id]);
+
+  useEffect(() => {
+    lastSeenRef.current = lastSeenByUser;
+  }, [lastSeenByUser]);
+
+  useEffect(() => {
+    viewRef.current = view;
+    activeUserIdRef.current = activeUserId;
+    userIdRef.current = user?.id || null;
+  }, [view, activeUserId, user?.id]);
 
   useEffect(() => {
     if (!token) return;
     axios.get(`${API_URL}/users`).then((res) => setUsers(res.data));
   }, [token]);
+
+  useEffect(() => {
+    if (view !== 'chat') return;
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [messages, view, activeUserId]);
 
   useEffect(() => {
     if (!token || !activeUserId || !user) return;
@@ -107,8 +204,39 @@ export default function Home() {
           status: m.status,
         }));
         setMessages(normalized);
+
+        // fetch last-seen for this chat
+        axios
+          .get(`${API_URL}/messages/last-seen`, {
+            params: { withUserId: activeUserId },
+            headers: { Authorization: `Bearer ${token}` },
+          })
+          .then((res) => {
+            if (res.data?.lastReadAt) {
+              setLastSeenByUser((prev) => ({
+                ...prev,
+                [activeUserId]: res.data.lastReadAt,
+              }));
+            }
+          })
+          .catch(() => undefined);
+
+        // mark unread messages as read when opening the chat
+        if (socket && view === 'chat' && document.visibilityState === 'visible') {
+          const unread = normalized
+            .filter((m: any) => m.toUserId === user.id && m.fromUserId === activeUserId)
+            .filter((m: any) => m.status !== 'read');
+
+          const lastUnread = unread[unread.length - 1];
+          if (lastUnread) {
+            socket.emit('message:read', {
+              messageId: lastUnread.id,
+              fromUserId: lastUnread.fromUserId,
+            });
+          }
+        }
       });
-  }, [token, activeUserId, user]);
+  }, [token, activeUserId, user, socket, view]);
 
   const sendMessage = () => {
     if (!text.trim() || !activeUserId || !socket) return;
@@ -116,9 +244,16 @@ export default function Home() {
     setText('');
   };
 
+  const lastSeen = activeUserId ? lastSeenByUser[activeUserId] : undefined;
+
   if (!token) {
     return (
-      <div className="min-h-screen bg-[#0c1116] text-white grid place-items-center px-6">
+      <div className="min-h-screen bg-[#0c1116] text-white grid place-items-center px-6 relative">
+        {toast && (
+          <div className="absolute top-6 right-6 bg-[#14202a] border border-[#24313a] text-slate-100 px-4 py-2 rounded-xl text-sm shadow-xl">
+            {toast}
+          </div>
+        )}
         <div className="w-full max-w-sm space-y-4">
           <div className="bg-[#12181e] border border-[#202b33] rounded-2xl p-6 space-y-4 shadow-2xl">
             <h1 className="text-xl font-semibold">{mode === 'login' ? 'Log in' : 'Sign up'}</h1>
@@ -143,6 +278,11 @@ export default function Home() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
+            {authError && (
+              <div className="text-sm text-red-400 bg-red-500/10 border border-red-500/30 rounded-xl px-3 py-2">
+                {authError}
+              </div>
+            )}
             <button className="w-full rounded-xl bg-[#1877f2] py-3 font-semibold" onClick={auth}>
               {mode === 'login' ? 'Log in' : 'Create account'}
             </button>
@@ -159,16 +299,57 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c1116] text-white">
+    <div className="min-h-screen bg-[#0c1116] text-white relative">
+      {toast && (
+        <div className="absolute top-6 right-6 bg-[#14202a] border border-[#24313a] text-slate-100 px-4 py-2 rounded-xl text-sm shadow-xl">
+          {toast}
+        </div>
+      )}
       <div className="max-w-6xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-[280px_1fr]">
         <aside className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-4 space-y-4 w-full min-h-[96vh] ${view === 'chat' ? 'hidden lg:block' : ''}`}>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center justify-between gap-2">
             <input
               className="w-full rounded-xl bg-[#0d1318] border border-[#2a3842] px-4 py-3"
               placeholder="Search or start new chat"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
+            <div className="flex items-center gap-2 text-sm text-slate-300">
+              <span>@{user?.username}</span>
+              <button
+                className="h-10 rounded-xl border border-[#2a3842] text-slate-200 hover:bg-[#1a222b] flex items-center gap-2 px-3 text-sm"
+                onClick={() => {
+                  setToken(null);
+                  setUser(null);
+                  setSocket(null);
+                  setActiveUserId(null);
+                  setMessages([]);
+                  localStorage.removeItem('chat_token');
+                  localStorage.removeItem('chat_user');
+                  setView('list');
+                  setToast('Successfully logged out');
+                  setTimeout(() => setToast(null), 2500);
+                }}
+                title="Sign out"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  width="16"
+                  height="16"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+                Sign out
+              </button>
+            </div>
           </div>
           <h2 className="text-lg font-semibold">Chats</h2>
           <div className="space-y-2">
@@ -205,8 +386,8 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-4 md:p-6 flex flex-col min-h-[96vh] w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
-          <div className="flex items-center justify-between border-b border-[#202b33] pb-4 mb-6">
+        <section className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-4 md:p-6 flex flex-col h-[96vh] overflow-hidden w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
+          <div className="flex items-center justify-between border-b border-[#202b33] pb-4 mb-4 flex-none">
             <div className="flex items-center gap-3">
               <button
                 className="text-sm text-slate-400"
@@ -220,7 +401,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-3">
+          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
             {messages
               .filter((m) =>
                 activeUser
@@ -228,27 +409,51 @@ export default function Home() {
                     (m.fromUserId === user?.id && m.toUserId === activeUser.id)
                   : false
               )
+              .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
               .map((m) => {
                 const isMe = m.fromUserId === user?.id;
-                const tick = m.status === 'read' ? '✓✓' : m.status === 'delivered' ? '✓✓' : '✓';
-                const tickClass = m.status === 'read' ? 'text-blue-300' : 'text-slate-300/70';
+                const status = m.status || 'sent';
                 return (
                   <div
                     key={m.id}
                     className={`max-w-sm px-4 py-2 rounded-2xl relative ${
-                      isMe ? 'ml-auto bg-[#2aa872]' : 'bg-[#2b3138]'
+                      isMe ? 'ml-auto bg-[#0f5f3a]' : 'bg-[#2b3138]'
                     }`}
                   >
-                    <div className="text-sm pr-10">{m.text}</div>
-                    <span className={`text-[10px] absolute bottom-1 right-2 whitespace-nowrap ${tickClass}`}>
+                    <div className="text-sm pr-12">{m.text}</div>
+                    <span className="text-[10px] absolute bottom-1 right-2 whitespace-nowrap flex items-center gap-1 text-slate-300/70">
                       {new Date(m.createdAt).toLocaleTimeString([], {
                         hour: '2-digit',
                         minute: '2-digit',
-                      })} {isMe && tick}
+                      })}
+                      {isMe && (
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          width="14"
+                          height="14"
+                          viewBox="0 0 24 24"
+                          fill="none"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          className={status === 'read' ? 'text-sky-300' : 'text-slate-300/70'}
+                        >
+                          {status === 'sent' ? (
+                            <polyline points="20 6 9 17 4 12" />
+                          ) : (
+                            <>
+                              <polyline points="20 6 9 17 4 12" />
+                              <polyline points="23 6 12 17 7 12" />
+                            </>
+                          )}
+                        </svg>
+                      )}
                     </span>
                   </div>
                 );
               })}
+            <div ref={messagesEndRef} />
             {messages.filter((m) =>
               activeUser
                 ? (m.fromUserId === activeUser.id && m.toUserId === user?.id) ||
@@ -260,7 +465,7 @@ export default function Home() {
               </div>
             )}
           </div>
-          <div className="mt-6 flex gap-2 border-t border-[#202b33] pt-4">
+          <div className="mt-4 flex gap-2 border-t border-[#202b33] pt-4 flex-none">
             <input
               className="flex-1 rounded-2xl bg-[#0d1318] border border-[#2a3842] px-4 py-3"
               placeholder={`Message @${activeUser?.username}`}

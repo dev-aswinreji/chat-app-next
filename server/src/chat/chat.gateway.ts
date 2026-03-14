@@ -29,6 +29,30 @@ export class ChatGateway {
         .update({ is_online: true })
         .eq('id', userId);
       this.server.emit('presence:update', { userId, isOnline: true });
+
+      // send presence snapshot to the new client
+      const snapshot = Array.from(this.userSockets.keys()).map((id) => ({
+        userId: id,
+        isOnline: true,
+      }));
+      client.emit('presence:sync', snapshot);
+
+      // mark undelivered messages to this user as delivered
+      const { data: undelivered } = await this.supabase.db
+        .from('messages')
+        .update({ status: 'delivered' })
+        .eq('to_user_id', userId)
+        .eq('status', 'sent')
+        .select('id, from_user_id');
+
+      undelivered?.forEach((m) => {
+        const senderSocket = this.userSockets.get(m.from_user_id);
+        if (senderSocket) {
+          this.server.to(senderSocket).emit('message:delivered', {
+            messageId: m.id,
+          });
+        }
+      });
     } catch {
       client.disconnect();
     }
@@ -89,16 +113,33 @@ export class ChatGateway {
     const readerId = this.onlineUsers.get(client.id);
     if (!readerId) return;
 
+    const { data: msg } = await this.supabase.db
+      .from('messages')
+      .select('id, created_at')
+      .eq('id', payload.messageId)
+      .maybeSingle();
+
+    if (!msg) return;
+
     await this.supabase.db
       .from('messages')
       .update({ status: 'read' })
-      .eq('id', payload.messageId);
+      .eq('from_user_id', payload.fromUserId)
+      .eq('to_user_id', readerId)
+      .lte('created_at', msg.created_at);
+
+    await this.supabase.db.from('chat_reads').upsert({
+      user_id: readerId,
+      peer_id: payload.fromUserId,
+      last_read_at: msg.created_at,
+      updated_at: new Date().toISOString(),
+    });
 
     const senderSocket = this.userSockets.get(payload.fromUserId);
     if (senderSocket) {
       this.server.to(senderSocket).emit('message:read', {
-        messageId: payload.messageId,
         readerId,
+        readUpTo: msg.created_at,
       });
     }
   }
