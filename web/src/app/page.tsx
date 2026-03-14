@@ -667,7 +667,7 @@ export default function Home() {
               })}
 
             {activeUser && typingMap[activeUser.id] && (
-              <div className="inline-flex px-3 py-2 rounded-2xl bubble-them bubble-animate">
+              <div className="inline-flex px-2 py-1.5 rounded-2xl bubble-them bubble-animate">
                 <div className="flex gap-1">
                   <span className="typing-dot h-1.5 w-1.5 rounded-full bg-slate-400" />
                   <span className="typing-dot delay-1 h-1.5 w-1.5 rounded-full bg-slate-400" />
