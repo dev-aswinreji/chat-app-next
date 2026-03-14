@@ -404,6 +404,10 @@ export default function Home() {
         .theme-light .text-slate-400 { color: #64748b; }
         .theme-light .bubble-me { background: #d1fae5; color: #0f172a; }
         .theme-light .bubble-them { background: #f1f5f9; color: #0f172a; }
+        .theme-light .hover-row:hover { background: #f1f5f9; }
+        .theme-light .hover-row.active { background: #e2e8f0; }
+        .theme-light .hover-row .name { color: #0f172a; }
+        .theme-light .hover-row .subtle { color: #475569; }
         .bubble-me { background: #0f5132; color: #e6fffa; border: 1px solid #0b3b24; }
         .bubble-them { background: #1f2a37; color: #e2e8f0; border: 1px solid #273244; }
       `}</style>
@@ -459,7 +463,7 @@ export default function Home() {
                 {theme === 'dark' ? '🌙' : '☀️'}
               </button>
               <button
-                className="h-10 rounded-xl surface-muted border text-slate-200 hover:bg-[#1a222b] flex items-center gap-2 px-3 text-sm"
+                className="h-10 w-10 rounded-xl surface-muted border text-slate-200 hover:bg-[#1a222b] flex items-center justify-center"
                 onClick={() => {
                   setToken(null);
                   setUser(null);
@@ -489,7 +493,6 @@ export default function Home() {
                   <polyline points="16 17 21 12 16 7" />
                   <line x1="21" y1="12" x2="9" y2="12" />
                 </svg>
-                Sign out
               </button>
             </div>
           </div>
@@ -503,8 +506,8 @@ export default function Home() {
               .map((u) => (
                 <button
                   key={u.id}
-                  className={`w-full text-left px-3 py-2 rounded-xl flex items-center justify-between gap-3 ${
-                    activeUserId === u.id ? 'bg-[#1d2630]' : 'hover:bg-[#1a222b]'
+                  className={`hover-row w-full text-left px-3 py-2 rounded-xl flex items-center justify-between gap-3 ${
+                    activeUserId === u.id ? 'active' : ''
                   }`}
                   onClick={() => {
                     setActiveUserId(u.id);
@@ -516,8 +519,8 @@ export default function Home() {
                       {u.username.slice(0, 1).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium">@{u.username}</p>
-                      <p className="text-xs text-slate-400">{u.full_name}</p>
+                      <p className="font-medium name">@{u.username}</p>
+                      <p className="text-xs subtle">{u.full_name}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
