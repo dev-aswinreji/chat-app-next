@@ -555,7 +555,7 @@ export default function Home() {
                 </svg>
               </button>
               <div>
-                <p className="text-sm text-slate-400">{activeUser ? 'Chatting with' : 'Select a chat'}</p>
+                <p className="text-sm text-subtle">{activeUser ? 'Chatting with' : 'Select a chat'}</p>
                 <h3 className="text-xl font-semibold">
                   {activeUser ? `@${activeUser.username}` : 'Start a conversation'}
                 </h3>
@@ -628,13 +628,13 @@ export default function Home() {
           </div>
           <div className="sticky bottom-0 z-20 surface border-t px-4 md:px-6 py-4 flex gap-2 flex-none">
             <input
-              className="flex-1 rounded-2xl surface-muted border px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
+              className="flex-1 rounded-2xl surface-muted border px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
               placeholder={`Message @${activeUser?.username}`}
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
             <button
-              className="h-11 w-11 rounded-2xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
+              className="h-10 w-10 md:h-11 md:w-11 rounded-2xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
               onClick={sendMessage}
               title="Send"
             >
