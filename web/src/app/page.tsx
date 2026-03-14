@@ -658,6 +658,17 @@ export default function Home() {
                   </div>
                 );
               })}
+
+            {activeUser && typingMap[activeUser.id] && (
+              <div className="max-w-[140px] px-3 py-2 rounded-2xl bubble-them">
+                <div className="flex gap-1">
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.15s]" />
+                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.3s]" />
+                </div>
+              </div>
+            )}
+
             <div ref={messagesEndRef} />
             {messages.filter((m) =>
               activeUser
@@ -671,15 +682,6 @@ export default function Home() {
             )}
           </div>
           <div className="sticky bottom-0 z-20 surface border-t px-4 md:px-6 py-4 flex flex-col gap-2 flex-none">
-            {activeUser && typingMap[activeUser.id] && (
-              <div className="max-w-[140px] px-3 py-2 rounded-2xl bubble-them">
-                <div className="flex gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.15s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.3s]" />
-                </div>
-              </div>
-            )}
             <div className="flex gap-2">
             <input
               className="flex-1 rounded-2xl surface-muted border px-4 py-2.5 md:py-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
