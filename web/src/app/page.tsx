@@ -35,6 +35,7 @@ export default function Home() {
   const [lastSeenByUser, setLastSeenByUser] = useState<Record<string, string>>({});
   const [unreadCounts, setUnreadCounts] = useState<Record<string, number>>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
   const lastSeenRef = useRef<Record<string, string>>({});
   const viewRef = useRef<'list' | 'chat'>('list');
@@ -64,9 +65,17 @@ export default function Home() {
   useEffect(() => {
     const savedToken = localStorage.getItem('chat_token');
     const savedUser = localStorage.getItem('chat_user');
+    const savedTheme = localStorage.getItem('chat_theme') as 'dark' | 'light' | null;
     if (savedToken) setToken(savedToken);
     if (savedUser) setUser(JSON.parse(savedUser));
+    if (savedTheme) setTheme(savedTheme);
   }, []);
+
+  useEffect(() => {
+    document.documentElement.classList.toggle('theme-light', theme === 'light');
+    document.documentElement.classList.toggle('theme-dark', theme === 'dark');
+    localStorage.setItem('chat_theme', theme);
+  }, [theme]);
 
   const auth = async () => {
     try {
@@ -347,7 +356,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0c1116] text-white relative">
+    <div className={`min-h-screen text-white relative ${theme === 'light' ? 'bg-[#f6f7fb] text-slate-900' : 'bg-[#0c1116] text-white'}`}>
       <style>{`
         .toast-progress {
           animation: toast-progress 2.5s linear forwards;
@@ -356,6 +365,12 @@ export default function Home() {
           from { width: 100%; }
           to { width: 0%; }
         }
+        .theme-light body { background: #f6f7fb; }
+        .theme-light .surface { background: #ffffff; border-color: #e5e7eb; }
+        .theme-light .surface-muted { background: #f8fafc; border-color: #e2e8f0; }
+        .theme-light .text-subtle { color: #64748b; }
+        .theme-light .bubble-me { background: #d1fae5; color: #0f172a; }
+        .theme-light .bubble-them { background: #f1f5f9; color: #0f172a; }
       `}</style>
       {toast && (
         <div
@@ -383,18 +398,33 @@ export default function Home() {
         </div>
       )}
       <div className="max-w-6xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-[280px_1fr]">
-        <aside className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-4 space-y-4 w-full min-h-[96vh] ${view === 'chat' ? 'hidden lg:block' : ''}`}>
+        <aside className={`surface border rounded-2xl p-4 space-y-4 w-full min-h-[96vh] ${view === 'chat' ? 'hidden lg:block' : ''}`}>
           <div className="flex items-center justify-between gap-2">
-            <input
-              className="w-full rounded-xl bg-[#0d1318] border border-[#2a3842] px-4 py-3"
-              placeholder="Search or start new chat"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+            <div className="relative w-full">
+              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="11" cy="11" r="8" />
+                  <path d="m21 21-4.3-4.3" />
+                </svg>
+              </span>
+              <input
+                className="w-full rounded-xl surface-muted border px-10 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
+                placeholder="Search"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
             <div className="flex items-center gap-2 text-sm text-slate-300">
-              <span>@{user?.username}</span>
+              <span className="text-subtle">@{user?.username}</span>
               <button
-                className="h-10 rounded-xl border border-[#2a3842] text-slate-200 hover:bg-[#1a222b] flex items-center gap-2 px-3 text-sm"
+                className="h-10 w-10 rounded-xl surface-muted border flex items-center justify-center"
+                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                title="Toggle theme"
+              >
+                {theme === 'dark' ? '🌙' : '☀️'}
+              </button>
+              <button
+                className="h-10 rounded-xl surface-muted border text-slate-200 hover:bg-[#1a222b] flex items-center gap-2 px-3 text-sm"
                 onClick={() => {
                   setToken(null);
                   setUser(null);
@@ -404,8 +434,8 @@ export default function Home() {
                   localStorage.removeItem('chat_token');
                   localStorage.removeItem('chat_user');
                   setView('list');
-                  setToast({ message: 'Successfully logged out', type: 'success' });
-                  setTimeout(() => setToast(null), 2500);
+                  setToast({ message: 'Logged out', type: 'success' });
+                  setTimeout(() => setToast(null), 2000);
                 }}
                 title="Sign out"
               >
@@ -447,7 +477,7 @@ export default function Home() {
                   }}
                 >
                   <div className="flex items-center gap-3">
-                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center text-sm font-semibold">
+                    <div className="h-9 w-9 rounded-full bg-gradient-to-br from-indigo-500 to-fuchsia-500 flex items-center justify-center text-sm font-semibold text-white">
                       {u.username.slice(0, 1).toUpperCase()}
                     </div>
                     <div>
@@ -470,14 +500,17 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-0 md:p-0 flex flex-col h-[100svh] md:h-[96vh] overflow-hidden w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
-          <div className="sticky top-0 z-20 bg-[#12181e] border-b border-[#202b33] px-4 md:px-6 py-4 flex items-center justify-between flex-none">
+        <section className={`surface border rounded-2xl p-0 md:p-0 flex flex-col h-[100svh] md:h-[96vh] overflow-hidden w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
+          <div className="sticky top-0 z-20 surface border-b px-4 md:px-6 py-4 flex items-center justify-between flex-none">
             <div className="flex items-center gap-3">
               <button
-                className="text-sm text-slate-400"
+                className="flex items-center gap-2 text-sm px-3 py-2 rounded-full surface-muted border"
                 onClick={() => setView('list')}
               >
-                ← Back
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="m15 18-6-6 6-6" />
+                </svg>
+                Back
               </button>
               <div>
                 <p className="text-sm text-slate-400">Chatting with</p>
@@ -501,7 +534,7 @@ export default function Home() {
                   <div
                     key={m.id}
                     className={`max-w-sm px-4 py-2 rounded-2xl relative ${
-                      isMe ? 'ml-auto bg-[#0f5f3a]' : 'bg-[#2b3138]'
+                      isMe ? 'ml-auto bubble-me' : 'bubble-them'
                     }`}
                   >
                     <div className="text-sm pr-12">{m.text}</div>
@@ -549,15 +582,22 @@ export default function Home() {
               </div>
             )}
           </div>
-          <div className="sticky bottom-0 z-20 bg-[#12181e] border-t border-[#202b33] px-4 md:px-6 py-4 flex gap-2 flex-none">
+          <div className="sticky bottom-0 z-20 surface border-t px-4 md:px-6 py-4 flex gap-2 flex-none">
             <input
-              className="flex-1 rounded-2xl bg-[#0d1318] border border-[#2a3842] px-4 py-3"
+              className="flex-1 rounded-2xl surface-muted border px-4 py-3 outline-none focus:ring-2 focus:ring-indigo-500/40"
               placeholder={`Message @${activeUser?.username}`}
               value={text}
               onChange={(e) => setText(e.target.value)}
             />
-            <button className="rounded-2xl bg-[#1877f2] px-6" onClick={sendMessage}>
-              Send
+            <button
+              className="h-11 w-11 rounded-2xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
+              onClick={sendMessage}
+              title="Send"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="m22 2-7 20-4-9-9-4z" />
+                <path d="M22 2 11 13" />
+              </svg>
             </button>
           </div>
         </section>
