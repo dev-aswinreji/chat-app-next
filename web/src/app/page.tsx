@@ -276,7 +276,7 @@ export default function Home() {
 
   useEffect(() => {
     if (view !== 'chat') return;
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' });
   }, [messages, view, activeUserId, typingMap]);
 
   useEffect(() => {
@@ -462,6 +462,12 @@ export default function Home() {
         .theme-light .hover-row .subtle { color: #475569; }
         .bubble-me { background: #0f5132; color: #e6fffa; border: 1px solid #0b3b24; }
         .bubble-them { background: #1f2a37; color: #e2e8f0; border: 1px solid #273244; }
+        .bubble-animate { animation: bubble-pop 180ms ease-out; }
+        @keyframes bubble-pop { from { transform: translateY(6px) scale(0.98); opacity: 0; } to { transform: translateY(0) scale(1); opacity: 1; } }
+        .typing-dot { animation: typing-bounce 1s ease-in-out infinite; }
+        .typing-dot.delay-1 { animation-delay: 0.15s; }
+        .typing-dot.delay-2 { animation-delay: 0.3s; }
+        @keyframes typing-bounce { 0%, 80%, 100% { transform: translateY(0); opacity: .5; } 40% { transform: translateY(-4px); opacity: 1; } }
       `}</style>
       {toast && (
         <div
@@ -622,7 +628,7 @@ export default function Home() {
                 return (
                   <div
                     key={m.id}
-                    className={`max-w-sm px-4 py-2 rounded-2xl relative ${
+                    className={`bubble-animate max-w-sm px-4 py-2 rounded-2xl relative ${
                       isMe ? 'ml-auto bubble-me' : 'bubble-them'
                     }`}
                   >
@@ -661,11 +667,11 @@ export default function Home() {
               })}
 
             {activeUser && typingMap[activeUser.id] && (
-              <div className="max-w-[140px] px-3 py-2 rounded-2xl bubble-them">
+              <div className="max-w-[140px] px-3 py-2 rounded-2xl bubble-them bubble-animate">
                 <div className="flex gap-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.15s]" />
-                  <span className="h-1.5 w-1.5 rounded-full bg-slate-400 animate-bounce [animation-delay:0.3s]" />
+                  <span className="typing-dot h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  <span className="typing-dot delay-1 h-1.5 w-1.5 rounded-full bg-slate-400" />
+                  <span className="typing-dot delay-2 h-1.5 w-1.5 rounded-full bg-slate-400" />
                 </div>
               </div>
             )}
