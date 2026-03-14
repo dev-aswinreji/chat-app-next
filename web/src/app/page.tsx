@@ -570,7 +570,7 @@ export default function Home() {
                       {u.username.slice(0, 1).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-medium name">@{u.username}</p>
+                      <p className="font-medium name">#{u.username}</p>
                       <p className="text-xs subtle">{u.full_name}</p>
                     </div>
                   </div>
@@ -580,9 +580,10 @@ export default function Home() {
                         {unreadCounts[u.id]}
                       </span>
                     ) : null}
-                    <span className={`text-xs ${u.is_online ? 'text-green-400' : 'text-gray-500'}`}>
-                      {u.is_online ? 'online' : 'offline'}
-                    </span>
+                    <span
+                      className={`h-2 w-2 rounded-full ${u.is_online ? 'bg-green-400' : 'bg-gray-500'}`}
+                      title={u.is_online ? 'online' : 'offline'}
+                    />
                   </div>
                 </button>
               ))}
@@ -608,7 +609,7 @@ export default function Home() {
               <div>
                 <p className="text-sm text-subtle">{activeUser ? 'Chatting with' : 'Select a chat'}</p>
                 <h3 className={`text-xl font-semibold ${theme === 'light' ? 'text-slate-900' : ''}`}>
-                  {activeUser ? `@${activeUser.username}` : 'Start a conversation'}
+                  {activeUser ? `#${activeUser.username}` : 'Start a conversation'}
                 </h3>
               </div>
             </div>
