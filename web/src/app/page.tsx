@@ -143,19 +143,24 @@ export default function Home() {
       });
 
       const currentUserId = userIdRef.current;
-      if (msg.toUserId === currentUserId) {
+      const isActiveChat =
+        msg.toUserId === currentUserId &&
+        viewRef.current === 'chat' &&
+        activeUserIdRef.current === msg.fromUserId &&
+        document.visibilityState === 'visible';
+
+      if (msg.toUserId === currentUserId && !isActiveChat) {
         setUnreadCounts((prev) => ({
           ...prev,
           [msg.fromUserId]: (prev[msg.fromUserId] || 0) + 1,
         }));
       }
 
-      if (
-        msg.toUserId === currentUserId &&
-        viewRef.current === 'chat' &&
-        activeUserIdRef.current === msg.fromUserId &&
-        document.visibilityState === 'visible'
-      ) {
+      if (isActiveChat) {
+        setUnreadCounts((prev) => ({
+          ...prev,
+          [msg.fromUserId]: 0,
+        }));
         s.emit('message:read', { messageId: msg.id, fromUserId: msg.fromUserId });
       }
     });
