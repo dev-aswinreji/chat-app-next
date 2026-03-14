@@ -116,6 +116,9 @@ export default function Home() {
             map[row.fromUserId] = row.unreadCount;
           });
           setUnreadCounts(map);
+        })
+        .catch(() => {
+          // ignore if token expired or not authorized yet
         });
     });
 
