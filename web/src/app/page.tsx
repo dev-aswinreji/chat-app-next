@@ -385,10 +385,10 @@ export default function Home() {
   }
 
   return (
-    <div className={`min-h-screen w-screen overflow-x-hidden text-white relative ${theme === 'light' ? 'bg-[#f6f7fb] text-slate-900' : 'bg-[#0c1116] text-white'}`}>
+    <div className={`h-[var(--app-vh)] w-screen overflow-hidden text-white relative ${theme === 'light' ? 'bg-[#f6f7fb] text-slate-900' : 'bg-[#0c1116] text-white'}`}>
       <style>{`
         :root { --app-vh: 100vh; }
-        html, body { overflow-x: hidden; max-width: 100vw; }
+        html, body { height: 100%; overflow: hidden; max-width: 100vw; }
         .toast-progress {
           animation: toast-progress 2.5s linear forwards;
         }
@@ -437,8 +437,8 @@ export default function Home() {
           </div>
         </div>
       )}
-      <div className="max-w-6xl mx-auto px-4 py-6 grid gap-6 lg:grid-cols-[360px_1fr]">
-        <aside className={`surface border rounded-2xl p-4 space-y-4 w-full min-h-[96vh] ${view === 'chat' ? 'hidden lg:block' : ''}`}>
+      <div className="max-w-6xl mx-auto px-3 md:px-4 py-3 md:py-6 grid gap-4 md:gap-6 lg:grid-cols-[360px_1fr] h-full">
+        <aside className={`surface border rounded-2xl p-4 space-y-4 w-full h-full ${view === 'chat' ? 'hidden lg:block' : ''}`}>
           <div className="flex items-center justify-between gap-2">
             <div className="relative w-full">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400">
