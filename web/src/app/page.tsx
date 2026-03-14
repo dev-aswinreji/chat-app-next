@@ -93,6 +93,17 @@ export default function Home() {
     };
   }, []);
 
+  const handleLogout = () => {
+    setToken(null);
+    setUser(null);
+    setSocket(null);
+    setActiveUserId(null);
+    setMessages([]);
+    localStorage.removeItem('chat_token');
+    localStorage.removeItem('chat_user');
+    setView('list');
+  };
+
   const auth = async () => {
     try {
       setAuthLoading(true);
@@ -124,7 +135,13 @@ export default function Home() {
     setSocket(s);
 
     s.on('connect', () => {
-      axios.get(`${API_URL}/users`).then((res) => setUsers(res.data));
+      axios
+        .get(`${API_URL}/users`)
+        .then((res) => setUsers(res.data))
+        .catch((err) => {
+          if (err?.response?.status === 401) handleLogout();
+        });
+
       axios
         .get(`${API_URL}/messages/unread-counts`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -136,8 +153,8 @@ export default function Home() {
           });
           setUnreadCounts(map);
         })
-        .catch(() => {
-          // ignore if token expired or not authorized yet
+        .catch((err) => {
+          if (err?.response?.status === 401) handleLogout();
         });
     });
 
@@ -239,7 +256,12 @@ export default function Home() {
 
   useEffect(() => {
     if (!token) return;
-    axios.get(`${API_URL}/users`).then((res) => setUsers(res.data));
+    axios
+      .get(`${API_URL}/users`)
+      .then((res) => setUsers(res.data))
+      .catch((err) => {
+        if (err?.response?.status === 401) handleLogout();
+      });
   }, [token]);
 
   useEffect(() => {
@@ -278,7 +300,9 @@ export default function Home() {
               }));
             }
           })
-          .catch(() => undefined);
+          .catch((err) => {
+            if (err?.response?.status === 401) handleLogout();
+          });
 
         // mark unread messages as read when opening the chat
         if (socket && view === 'chat' && document.visibilityState === 'visible') {
@@ -299,6 +323,9 @@ export default function Home() {
             [activeUserId]: 0,
           }));
         }
+      })
+      .catch((err) => {
+        if (err?.response?.status === 401) handleLogout();
       });
   }, [token, activeUserId, user, socket, view]);
 
@@ -466,14 +493,7 @@ export default function Home() {
               <button
                 className="h-10 w-10 rounded-xl surface-muted border text-slate-200 hover:bg-[#1a222b] flex items-center justify-center"
                 onClick={() => {
-                  setToken(null);
-                  setUser(null);
-                  setSocket(null);
-                  setActiveUserId(null);
-                  setMessages([]);
-                  localStorage.removeItem('chat_token');
-                  localStorage.removeItem('chat_user');
-                  setView('list');
+                  handleLogout();
                   setToast({ message: 'Logged out', type: 'success' });
                   setTimeout(() => setToast(null), 2000);
                 }}
