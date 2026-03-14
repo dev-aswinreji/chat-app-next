@@ -374,6 +374,8 @@ export default function Home() {
         .theme-light .text-subtle { color: #64748b; }
         .theme-light .bubble-me { background: #d1fae5; color: #0f172a; }
         .theme-light .bubble-them { background: #f1f5f9; color: #0f172a; }
+        .bubble-me { background: #0f5132; color: #e6fffa; border: 1px solid #0b3b24; }
+        .bubble-them { background: #1f2a37; color: #e2e8f0; border: 1px solid #273244; }
       `}</style>
       {toast && (
         <div
