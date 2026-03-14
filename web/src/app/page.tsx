@@ -465,8 +465,8 @@ export default function Home() {
           </div>
         </aside>
 
-        <section className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-4 md:p-6 flex flex-col h-[96vh] overflow-hidden w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
-          <div className="flex items-center justify-between border-b border-[#202b33] pb-4 mb-4 flex-none">
+        <section className={`bg-[#12181e] border border-[#202b33] rounded-2xl p-0 md:p-0 flex flex-col h-[96vh] overflow-hidden w-full ${view === 'list' ? 'hidden lg:flex' : ''}`}>
+          <div className="sticky top-0 z-20 bg-[#12181e] border-b border-[#202b33] px-4 md:px-6 py-4 flex items-center justify-between flex-none">
             <div className="flex items-center gap-3">
               <button
                 className="text-sm text-slate-400"
@@ -480,7 +480,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-          <div className="flex-1 overflow-y-auto space-y-3 pr-1">
+          <div className="flex-1 overflow-y-auto space-y-3 px-4 md:px-6 pr-1">
             {messages
               .filter((m) =>
                 activeUser
@@ -544,7 +544,7 @@ export default function Home() {
               </div>
             )}
           </div>
-          <div className="mt-4 flex gap-2 border-t border-[#202b33] pt-4 flex-none">
+          <div className="mt-4 flex gap-2 border-t border-[#202b33] px-4 md:px-6 py-4 flex-none">
             <input
               className="flex-1 rounded-2xl bg-[#0d1318] border border-[#2a3842] px-4 py-3"
               placeholder={`Message @${activeUser?.username}`}
