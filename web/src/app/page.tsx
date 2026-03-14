@@ -634,7 +634,7 @@ export default function Home() {
               onChange={(e) => setText(e.target.value)}
             />
             <button
-              className="h-11 w-11 md:h-11 md:w-11 rounded-2xl bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
+              className="h-11 w-11 md:h-11 md:w-11 rounded-lg bg-indigo-600 hover:bg-indigo-500 flex items-center justify-center"
               onClick={sendMessage}
               title="Send"
             >
