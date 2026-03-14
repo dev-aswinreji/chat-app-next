@@ -277,7 +277,7 @@ export default function Home() {
   useEffect(() => {
     if (view !== 'chat') return;
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages, view, activeUserId]);
+  }, [messages, view, activeUserId, typingMap]);
 
   useEffect(() => {
     if (!token || !activeUserId || !user) return;
