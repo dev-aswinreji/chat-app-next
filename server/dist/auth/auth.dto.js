@@ -9,7 +9,8 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.SignInDto = exports.SignUpDto = void 0;
+exports.SessionDto = exports.MeResponseDto = exports.AuthResponseDto = exports.SignInDto = exports.SignUpDto = void 0;
+const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 class SignUpDto {
     username;
@@ -18,14 +19,17 @@ class SignUpDto {
 }
 exports.SignUpDto = SignUpDto;
 __decorate([
+    (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SignUpDto.prototype, "username", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SignUpDto.prototype, "fullName", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ minLength: 6 }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(6),
     __metadata("design:type", String)
@@ -36,11 +40,72 @@ class SignInDto {
 }
 exports.SignInDto = SignInDto;
 __decorate([
+    (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SignInDto.prototype, "username", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], SignInDto.prototype, "password", void 0);
+class AuthResponseDto {
+    accessToken;
+    user;
+}
+exports.AuthResponseDto = AuthResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], AuthResponseDto.prototype, "accessToken", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", Object)
+], AuthResponseDto.prototype, "user", void 0);
+class MeResponseDto {
+    id;
+    username;
+    full_name;
+}
+exports.MeResponseDto = MeResponseDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], MeResponseDto.prototype, "id", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], MeResponseDto.prototype, "username", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], MeResponseDto.prototype, "full_name", void 0);
+class SessionDto {
+    id;
+    created_at;
+    expires_at;
+    ip;
+    user_agent;
+}
+exports.SessionDto = SessionDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], SessionDto.prototype, "id", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], SessionDto.prototype, "created_at", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    __metadata("design:type", String)
+], SessionDto.prototype, "expires_at", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], SessionDto.prototype, "ip", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ required: false }),
+    __metadata("design:type", String)
+], SessionDto.prototype, "user_agent", void 0);
 //# sourceMappingURL=auth.dto.js.map

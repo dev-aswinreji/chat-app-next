@@ -18,4 +18,10 @@ export declare class ChatGateway {
         messageId: number;
         fromUserId: string;
     }, client: Socket): Promise<void>;
+    onTypingStart(payload: {
+        toUserId: string;
+    }, client: Socket): Promise<void>;
+    onTypingStop(payload: {
+        toUserId: string;
+    }, client: Socket): Promise<void>;
 }

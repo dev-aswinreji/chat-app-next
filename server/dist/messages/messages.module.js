@@ -10,11 +10,13 @@ exports.MessagesModule = void 0;
 const common_1 = require("@nestjs/common");
 const messages_controller_1 = require("./messages.controller");
 const supabase_service_1 = require("../supabase/supabase.service");
+const auth_module_1 = require("../auth/auth.module");
 let MessagesModule = class MessagesModule {
 };
 exports.MessagesModule = MessagesModule;
 exports.MessagesModule = MessagesModule = __decorate([
     (0, common_1.Module)({
+        imports: [auth_module_1.AuthModule],
         controllers: [messages_controller_1.MessagesController],
         providers: [supabase_service_1.SupabaseService],
     })

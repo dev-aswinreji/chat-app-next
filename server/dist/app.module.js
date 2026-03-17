@@ -8,16 +8,19 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const passport_1 = require("@nestjs/passport");
 const auth_module_1 = require("./auth/auth.module");
 const chat_module_1 = require("./chat/chat.module");
 const users_module_1 = require("./users/users.module");
 const messages_module_1 = require("./messages/messages.module");
+const jwt_strategy_1 = require("./auth/strategies/jwt.strategy");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
-        imports: [auth_module_1.AuthModule, chat_module_1.ChatModule, users_module_1.UsersModule, messages_module_1.MessagesModule],
+        imports: [passport_1.PassportModule.register({ defaultStrategy: 'jwt' }), auth_module_1.AuthModule, chat_module_1.ChatModule, users_module_1.UsersModule, messages_module_1.MessagesModule],
+        providers: [jwt_strategy_1.JwtStrategy],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

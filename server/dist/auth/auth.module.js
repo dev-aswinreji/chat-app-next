@@ -9,23 +9,25 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AuthModule = void 0;
 const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
+const passport_1 = require("@nestjs/passport");
 const auth_controller_1 = require("./auth.controller");
 const auth_service_1 = require("./auth.service");
 const supabase_service_1 = require("../supabase/supabase.service");
+const jwt_strategy_1 = require("./strategies/jwt.strategy");
 let AuthModule = class AuthModule {
 };
 exports.AuthModule = AuthModule;
 exports.AuthModule = AuthModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            passport_1.PassportModule.register({ defaultStrategy: 'jwt' }),
             jwt_1.JwtModule.register({
                 secret: process.env.JWT_SECRET || 'dev-secret',
-                signOptions: { expiresIn: '7d' },
             }),
         ],
         controllers: [auth_controller_1.AuthController],
-        providers: [auth_service_1.AuthService, supabase_service_1.SupabaseService],
-        exports: [auth_service_1.AuthService, supabase_service_1.SupabaseService, jwt_1.JwtModule],
+        providers: [auth_service_1.AuthService, supabase_service_1.SupabaseService, jwt_strategy_1.JwtStrategy],
+        exports: [auth_service_1.AuthService, supabase_service_1.SupabaseService, jwt_1.JwtModule, passport_1.PassportModule],
     })
 ], AuthModule);
 //# sourceMappingURL=auth.module.js.map
